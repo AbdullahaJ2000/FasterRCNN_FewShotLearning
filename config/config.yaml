@@ -14,13 +14,13 @@ paths:
 # Dataset settings
 dataset:
   meta_train:
-    json_path: "annotations/train.json"  # Path to COCO JSON annotation file
-    images_path: "train/images"  # Path to images folder
+    json_path: "C:/Users/User/Desktop/few_shot_detection/kaggle/input/oxalis-coco/_annotations.coco.json"  # Path to COCO JSON annotation file
+    images_path: "C:/Users/User/Desktop/few_shot_detection/kaggle/input/oxalis-coco/train"  # Path to images folder
   
   new_class:
-    json_path: "new_task.json"  # Path to new class COCO JSON
-    images_path: "images/test"  # Path to new class images folder
-    test_images_folder: "images"  # Path to test images folder
+    json_path: "C:/Users/User/Desktop/few_shot_detection/kaggle/input/oxalis-coco/_annotations.coco.json"  # Path to new class COCO JSON
+    images_path: "C:/Users/User/Desktop/few_shot_detection/kaggle/input/oxalis-coco/train"  # Path to new class images folder
+    test_images_folder: "C:/Users/User/Desktop/few_shot_detection/kaggle/input/oxalis-coco/train"  # Path to test images folder
 
 # Model settings
 model:
@@ -30,21 +30,21 @@ model:
 # Meta-learning settings
 meta_learning:
   num_epochs: 10
-  ways: 5  # N-way classification
+  ways: 1  # N-way classification
   shots: 5  # K-shot learning
   batch_size: 2
   lr: 0.0001
 
 # Fine-tuning settings
 fine_tuning:
-  num_epochs: 50
+  num_epochs: 10
   batch_size: 2
   lr: 0.005
   momentum: 0.9
 
 # Inference settings
 inference:
-  image_path: "data/images"  # Can be a single image file or a directory
+  image_path: "C:/Users/User/Desktop/few_shot_detection/kaggle/input/oxalis-coco/train/jp9_jpg.rf.d80f4ab806ee1c359c44df92a4dcf5c5.jpg"  # Can be a single image file or a directory
   conf_threshold: 0.5
   batch_size: 1  # Batch size for processing multiple images
   save_visualizations: true  # Whether to save images with bounding boxes
