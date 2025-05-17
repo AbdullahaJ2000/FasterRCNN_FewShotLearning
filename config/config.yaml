@@ -1,0 +1,51 @@
+# Few-Shot Object Detection Configuration
+
+# General settings
+general:
+  device: "cuda"  # Use "cuda" or "cpu"
+  random_seed: 42
+
+# Paths
+paths:
+  meta_trained_model: "models/fasterrcnn_meta_trained.pth"
+  fine_tuned_model: "models/fasterrcnn_finetuned_new_class.pth"
+  output_dir: "outputs"
+
+# Dataset settings
+dataset:
+  meta_train:
+    json_path: "annotations/train.json"  # Path to COCO JSON annotation file
+    images_path: "train/images"  # Path to images folder
+  
+  new_class:
+    json_path: "new_task.json"  # Path to new class COCO JSON
+    images_path: "images/test"  # Path to new class images folder
+    test_images_folder: "images"  # Path to test images folder
+
+# Model settings
+model:
+  backbone: "fasterrcnn_resnet50_fpn"
+  num_classes: 2  # Background + 1 class for fine-tuning
+
+# Meta-learning settings
+meta_learning:
+  num_epochs: 10
+  ways: 5  # N-way classification
+  shots: 5  # K-shot learning
+  batch_size: 2
+  lr: 0.0001
+
+# Fine-tuning settings
+fine_tuning:
+  num_epochs: 50
+  batch_size: 2
+  lr: 0.005
+  momentum: 0.9
+
+# Inference settings
+inference:
+  image_path: "data/images"  # Can be a single image file or a directory
+  conf_threshold: 0.5
+  batch_size: 1  # Batch size for processing multiple images
+  save_visualizations: true  # Whether to save images with bounding boxes
+  output_format:
