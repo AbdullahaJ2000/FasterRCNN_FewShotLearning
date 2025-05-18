@@ -99,7 +99,7 @@ def inference(image_path, model_path, save_path="./outputs/inferResultofTeun.jpg
     weights = FasterRCNN_ResNet50_FPN_Weights.DEFAULT
     model = fasterrcnn_resnet50_fpn(weights=weights)
     in_features = model.roi_heads.box_predictor.cls_score.in_features
-    model.roi_heads.box_predictor = torchvision.models.detection.faster_rcnn.FastRCNNPredictor(in_features, 2)
+    model.roi_heads.box_predictor = torchvision.models.detection.faster_rcnn.FastRCNNPredictor(in_features, 14)
     model.load_state_dict(torch.load(model_path))
     model.to(device)
     model.eval()
@@ -147,7 +147,8 @@ if __name__ == "__main__":
         weights = FasterRCNN_ResNet50_FPN_Weights.DEFAULT
         model = fasterrcnn_resnet50_fpn(weights=weights)
         in_features = model.roi_heads.box_predictor.cls_score.in_features
-        model.roi_heads.box_predictor = torchvision.models.detection.faster_rcnn.FastRCNNPredictor(in_features, 2)
+        print(in_features)
+        model.roi_heads.box_predictor = torchvision.models.detection.faster_rcnn.FastRCNNPredictor(in_features, 14)
         model.to(device)
 
         optimizer = torch.optim.SGD(model.parameters(), lr=0.005, momentum=0.9, weight_decay=0.0005)
@@ -159,7 +160,8 @@ if __name__ == "__main__":
             for images, targets in tqdm(train_loader):
                 images = [img.to(device) for img in images]
                 targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-
+                for t in targets:
+                    print(t['labels'])
                 loss_dict = model(images, targets)
                 losses = sum(loss for loss in loss_dict.values())
 
