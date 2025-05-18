@@ -127,8 +127,9 @@ def fine_tune_new_class(config):
     output_dir = os.path.join(config.get('paths', 'output_dir', default='outputs'), 'new_class_results')
     
     # Number of background classes + 1 new class
-    num_classes = 2  # Background (0) + new class (1)
-    
+    # num_classes = 2  # Background (0) + new class (1)
+    num_classes = config.get('fine_tuning', 'num_classes', default=1)
+    num_classes+=1 #vackground
     # Create model
     meta_model = ModelFactory.create_model(
         config.get('model', 'backbone', default='fasterrcnn_resnet50_fpn'),

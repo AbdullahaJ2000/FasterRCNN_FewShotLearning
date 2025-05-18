@@ -14,13 +14,13 @@ paths:
 # Dataset settings
 dataset:
   meta_train:
-    json_path: "C:/Users/User/Desktop/few_shot_detection/kaggle/input/oxalis-coco/_annotations.coco.json"  # Path to COCO JSON annotation file
-    images_path: "C:/Users/User/Desktop/few_shot_detection/kaggle/input/oxalis-coco/train"  # Path to images folder
+    json_path: "C:/Users/User/Desktop/few_shot_detection/coco/annotations_trainval2017/annotations/instances_train2017.json"  # Path to COCO JSON annotation file
+    images_path: C:/Users/User/Desktop/few_shot_detection/coco/train2017/train2017"  # Path to images folder
   
   new_class:
-    json_path: "C:/Users/User/Desktop/few_shot_detection/kaggle/input/oxalis-coco/_annotations.coco.json"  # Path to new class COCO JSON
-    images_path: "C:/Users/User/Desktop/few_shot_detection/kaggle/input/oxalis-coco/train"  # Path to new class images folder
-    test_images_folder: "C:/Users/User/Desktop/few_shot_detection/kaggle/input/oxalis-coco/train"  # Path to test images folder
+    json_path: "C:/Users/User/Desktop/few_shot_detection/FasterRCNN_FewShotLearning/NewClassData/support/_annotations_first_10.coco.json"  # Path to new class COCO JSON
+    images_path: "C:/Users/User/Desktop/few_shot_detection/FasterRCNN_FewShotLearning/NewClassData/support/images"  # Path to new class images folder
+    test_images_folder: "C:/Users/User/Desktop/few_shot_detection/FasterRCNN_FewShotLearning/NewClassData/query"  # Path to test images folder
 
 # Model settings
 model:
@@ -29,9 +29,9 @@ model:
 
 # Meta-learning settings
 meta_learning:
-  num_epochs: 10
-  ways: 1  # N-way classification
-  shots: 5  # K-shot learning
+  num_epochs: 50
+  ways: 20  # N-way classification
+  shots: 15  # K-shot learning
   batch_size: 2
   lr: 0.0001
 
@@ -41,11 +41,14 @@ fine_tuning:
   batch_size: 2
   lr: 0.005
   momentum: 0.9
+  num_classes: 1
 
 # Inference settings
 inference:
-  image_path: "C:/Users/User/Desktop/few_shot_detection/kaggle/input/oxalis-coco/train/jp9_jpg.rf.d80f4ab806ee1c359c44df92a4dcf5c5.jpg"  # Can be a single image file or a directory
+  image_path: "C:/Users/User/Desktop/few_shot_detection/kaggle/input/oxalis-coco/train/jp6_jpg.rf.70c7eb83525469db9f592e105946ede2.jpg"  # Can be a single image file or a directory
   conf_threshold: 0.5
   batch_size: 1  # Batch size for processing multiple images
   save_visualizations: true  # Whether to save images with bounding boxes
   output_format:
+
+

@@ -95,7 +95,7 @@ def compute_map(model, dataloader):
                 aps.append(ap_50)
     return sum(aps) / len(aps) if aps else 0.0
 
-def inference(image_path, model_path, save_path="output.jpg"):
+def inference(image_path, model_path, save_path="./outputs/inferResultofTeun.jpg"):
     weights = FasterRCNN_ResNet50_FPN_Weights.DEFAULT
     model = fasterrcnn_resnet50_fpn(weights=weights)
     in_features = model.roi_heads.box_predictor.cls_score.in_features
@@ -176,11 +176,11 @@ if __name__ == "__main__":
         plt.xlabel("Epoch")
         plt.ylabel("Loss")
         plt.grid(True)
-        plt.savefig("training_loss_curve.png")
+        plt.savefig("./outputs/training_loss_curve.png")
         plt.close()
         print("Saved training loss curve to training_loss_curve.png")
 
-        torch.save(model.state_dict(), "fasterrcnn.pth")
+        torch.save(model.state_dict(), "./models/fasterrcnn.pth")
         map_score = compute_map(model, val_loader)
         print(f"\nFinal Validation mAP@0.5: {map_score:.4f}")
 

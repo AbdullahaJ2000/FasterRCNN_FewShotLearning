@@ -79,6 +79,8 @@ class CocoDetectionDataset(BaseDataset):
         """Get a sample from the dataset."""
         sample = self.samples[idx]
         img_path = os.path.join(self.images_dir, sample['file_name'])
+        img_path=img_path.replace("\\","/")
+        img_path=img_path.replace('"',"")
         image = Image.open(img_path).convert("RGB")
         
         boxes = torch.tensor(sample['bboxes'], dtype=torch.float32)
@@ -161,6 +163,7 @@ class NewClassDataset(BaseDataset):
         """Get a sample from the dataset."""
         sample = self.samples[idx]
         img_path = os.path.join(self.images_dir, sample['file_name'])
+        img_path= img_path.replace("\\","/")
         image = Image.open(img_path).convert("RGB")
         
         boxes = torch.tensor(sample['bboxes'], dtype=torch.float32)
