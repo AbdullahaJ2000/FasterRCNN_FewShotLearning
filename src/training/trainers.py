@@ -266,7 +266,7 @@ class MetaTrainer(BaseTrainer):
 
 
 class FineTuner(BaseTrainer):
-    """Trainer for fine-tuning a model on a new class."""
+    '''Trainer for fine-tuning a model on a new class.'''
     
     def __init__(
         self, 
@@ -275,7 +275,7 @@ class FineTuner(BaseTrainer):
         config, 
         device="cuda"
     ):
-        """
+        '''
         Initialize the fine-tuner.
         
         Args:
@@ -283,13 +283,13 @@ class FineTuner(BaseTrainer):
             dataset: The dataset to fine-tune on
             config (dict): Configuration parameters
             device (str): Device to use for training
-        """
+        '''
         super().__init__(model, device)
         self.dataset = dataset
         self.config = config
     
     def train(self):
-        """Fine-tune the model on a new class."""
+        '''Fine-tune the model on a new class.'''
         num_epochs = self.config['fine_tuning']['num_epochs']
         batch_size = self.config['fine_tuning']['batch_size']
         lr = self.config['fine_tuning']['lr']
@@ -343,5 +343,111 @@ class FineTuner(BaseTrainer):
                 epoch_loss += loss.item()
             
             print(f"Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}")
+        
+        return self.model
+
+
+
+class FineTuner2(BaseTrainer):
+    """Trainer for fine-tuning a model on a new class with given ways and shots."""
+    
+    def __init__(
+        self, 
+        model, 
+        dataset, 
+        config, 
+        device="cuda"
+    ):
+        super().__init__(model, device)
+        self.dataset = dataset
+        self.config = config
+        
+        # Build class to indices mapping for sampling
+        self.class_to_indices = self._build_class_to_indices()
+        
+        # Read ways and shots from config
+        self.ways = config['fine_tuning'].get('ways', 1)
+        self.shots = config['fine_tuning'].get('shots', 1)
+
+        
+        self._validate_dataset()
+    
+    def _build_class_to_indices(self):
+        class_to_indices = defaultdict(list)
+        for idx, sample in enumerate(self.dataset.samples):
+            print(sample['labels'])
+            for label in set(sample['labels']):
+                class_to_indices[label].append(idx)
+        return class_to_indices
+    
+    def _validate_dataset(self):
+        if len(self.class_to_indices) < self.ways:
+            raise ValueError(
+                f"Dataset only has {len(self.class_to_indices)} classes, but {self.ways} ways requested."
+            )
+        insufficient = [
+            cls for cls, ids in self.class_to_indices.items() 
+            if len(ids) < self.shots
+        ]
+        if insufficient:
+            raise ValueError(
+                f"Classes with insufficient samples (need at least {self.shots}): {insufficient}"
+            )
+    
+    def _sample_few_shot(self):
+        # Sample classes and shots per class
+        selected_classes = random.sample(list(self.class_to_indices.keys()), self.ways)
+        indices = []
+        for cls in selected_classes:
+            cls_indices = random.sample(self.class_to_indices[cls], self.shots)
+            indices.extend(cls_indices)
+        return indices
+    
+    def train(self):
+        num_epochs = self.config['fine_tuning']['num_epochs']
+        batch_size = self.config['fine_tuning']['batch_size']
+        lr = self.config['fine_tuning']['lr']
+        momentum = self.config['fine_tuning']['momentum']
+        
+        self.model.train()
+        
+        losses = []
+        
+        for epoch in range(num_epochs):
+            # Sample few-shot data for this epoch
+            sample_indices = self._sample_few_shot()
+            subset = Subset(self.dataset, sample_indices)
+            dataloader = DataLoader(
+                subset, batch_size=batch_size, shuffle=True, collate_fn=lambda x: tuple(zip(*x))
+            )
+            
+            epoch_loss = 0.0
+            for images, targets in dataloader:
+                images = [img.to(self.device) for img in images]
+                targets = [{k: v.to(self.device) for k, v in t.items()} for t in targets]
+                
+                loss_dict = self.model(images, targets)
+                if isinstance(loss_dict, list):
+                    loss_dict = loss_dict[0]
+                
+                loss = sum(
+                    v.float().mean() if v.dim() > 0 else v.float()
+                    for v in loss_dict.values()
+                )
+                
+                optimizer = torch.optim.SGD(
+                    self.model.parameters(),
+                    lr=lr,
+                    momentum=momentum
+                )
+                
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                
+                epoch_loss += loss.item()
+            
+            print(f"Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}")
+            losses.append(epoch_loss)
         
         return self.model

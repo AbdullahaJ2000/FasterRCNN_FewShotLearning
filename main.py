@@ -13,7 +13,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from src.utils.config_utils import Config
 from src.models.detector import ModelFactory
 from src.data.coco_dataset import CocoDetectionDataset, NewClassDataset
-from src.training.trainers import MetaTrainer, FineTuner
+from src.training.trainers import MetaTrainer, FineTuner , FineTuner2
 from src.inference.inference import Inferencer
 from src.utils.visualization import Visualizer
 
@@ -42,7 +42,7 @@ def setup_arg_parser():
     parser.add_argument('--config', type=str, default='config/config.yaml',
                         help='Path to configuration file')
     parser.add_argument('--mode', type=str, required=True, 
-                        choices=['meta-train', 'new-class', 'infer'],
+                        choices=['meta-train', 'new-class','new-class2', 'infer'],
                         help='Operation mode')
     
     # Meta-training arguments
@@ -123,7 +123,7 @@ def fine_tune_new_class(config):
     num_fine_tune_epochs = config.get('fine_tuning', 'num_epochs', default=20)
     device = config.get('general', 'device', default='cuda')
     output_model_path = config.get('paths', 'fine_tuned_model')
-    conf_threshold = config.get('inference', 'conf_threshold', default=0.5)
+    conf_threshold = config.get('inference', 'conf_threshold', default=0.8)
     output_dir = os.path.join(config.get('paths', 'output_dir', default='outputs'), 'new_class_results')
     
     # Number of background classes + 1 new class
@@ -183,7 +183,75 @@ def fine_tune_new_class(config):
         
         inferencer.run_inference_on_images(test_image_paths, inference_output_dir)
 
-
+def fine_tune_new_class2(config):
+    """Fine-tune on a new class."""
+    # Get configuration values
+    model_path = config.get('paths', 'meta_trained_model')
+    new_class_json = config.get('dataset', 'new_class', 'json_path')
+    new_class_images = config.get('dataset', 'new_class', 'images_path')
+    test_images_folder = config.get('dataset', 'new_class', 'test_images_folder')
+    num_fine_tune_epochs = config.get('fine_tuning', 'num_epochs', default=20)
+    device = config.get('general', 'device', default='cuda')
+    output_model_path = config.get('paths', 'fine_tuned_model')
+    conf_threshold = config.get('inference', 'conf_threshold', default=0.95)
+    output_dir = os.path.join(config.get('paths', 'output_dir', default='outputs'), 'new_class_results')
+    
+    # Number of background classes + 1 new class
+    # num_classes = 2  # Background (0) + new class (1)
+    num_classes = config.get('fine_tuning', 'num_classes', default=1)
+    num_classes+=1 #vackground
+    # Create model
+    meta_model = ModelFactory.create_model(
+        config.get('model', 'backbone', default='fasterrcnn_resnet50_fpn'),
+        num_classes
+    )
+    
+    # Load the pre-trained weights
+    meta_model = ModelFactory.load_model(meta_model, model_path, num_classes=num_classes)
+    print("Loaded meta-trained model weights")
+    
+    # Create dataset for the new class
+    transform = torchvision.transforms.ToTensor()
+    new_class_dataset = NewClassDataset(
+        new_class_json, 
+        new_class_images,
+        transforms=transform
+    )
+    
+    print(f"Created dataset with {len(new_class_dataset)} examples of the new class")
+    
+    # Fine-tune the model on the new class
+    fine_tuner = FineTuner2(meta_model, new_class_dataset, config.config, device=device)
+    fine_tuned_model = fine_tuner.train()
+    
+    # Save the fine-tuned model
+    fine_tuner.save_model(output_model_path)
+    
+  
+    # Get paths of all test images
+    test_image_paths = []
+    for ext in ['*.jpg', '*.jpeg', '*.png', '*.bmp', '*.JPG', '*.JPEG', '*.PNG', '*.BMP']:
+        test_image_paths.extend(glob.glob(os.path.join(test_images_folder, ext)))
+    
+    if not test_image_paths:
+        print(f"No images found in {test_images_folder}")
+    else:
+        print(f"Found {len(test_image_paths)} test images")
+        
+        # Create a specific output directory for inference results
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        inference_output_dir = os.path.join(output_dir, f"new_class_results_{timestamp}")
+        os.makedirs(inference_output_dir, exist_ok=True)
+        
+        # Run inference on the test images
+        inferencer = Inferencer(
+            fine_tuned_model,
+            transform,
+            device=device,
+            conf_threshold=conf_threshold
+        )
+        
+        inferencer.run_inference_on_images(test_image_paths, inference_output_dir)
 def run_inference(config):
     """Run inference on a single image or a directory of images."""
     # Get configuration values
@@ -343,6 +411,8 @@ def main():
         meta_train(config)
     elif args.mode == 'new-class':
         fine_tune_new_class(config)
+    elif args.mode == 'new-class2':
+        fine_tune_new_class2(config)
     elif args.mode == 'infer':
         run_inference(config)
     else:

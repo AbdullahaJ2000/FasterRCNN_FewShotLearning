@@ -100,6 +100,7 @@ class CocoDetectionDataset(BaseDataset):
     def get_class_to_indices(self):
         """Create a mapping from classes to sample indices."""
         class_to_indices = defaultdict(list)
+        
         for idx, sample in enumerate(self.samples):
             for label in set(sample['labels']):
                 class_to_indices[label].append(idx)
@@ -151,7 +152,7 @@ class NewClassDataset(BaseDataset):
             for ann in anns:
                 x, y, w, h = ann['bbox']
                 boxes.append([x, y, x + w, y + h])
-                labels.append(1)  # Always use class index 1 for our new class
+                labels.append(ann['category_id'])  # Always use class index 1 for our new class
             
             self.samples.append({
                 'file_name': img_file,
