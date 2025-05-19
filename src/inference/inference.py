@@ -44,7 +44,7 @@ class Inferencer:
         # Run inference
         with torch.no_grad():
             prediction = self.model(img_tensor)[0]
-        
+            print(prediction)
         if draw_on_image:
             # Create a copy for drawing
             output_img = image.copy()
@@ -52,14 +52,15 @@ class Inferencer:
             
             # Draw bounding boxes
             for box, score, label in zip(prediction['boxes'], prediction['scores'], prediction['labels']):
-                if score > self.conf_threshold:
-                    x1, y1, x2, y2 = box.tolist()
-                    draw.rectangle([x1, y1, x2, y2], outline="red", width=3)
-                    
-                    # Class 1 is the newly fine-tuned class
-                    class_name = "new_class" if label.item() == 1 else f"class_{label.item()}"
-                    draw.text((x1, y1 - 10), f"{class_name}: {score:.2f}", fill="red")
-            
+                print(box)
+                # if score > self.conf_threshold:
+                x1, y1, x2, y2 = box.tolist()
+                draw.rectangle([x1, y1, x2, y2], outline="red", width=3)
+                
+                # Class 1 is the newly fine-tuned class
+                class_name = "new_class" if label.item() == 1 else f"class_{label.item()}"
+                draw.text((x1, y1 - 10), f"{class_name}: {score:.2f}", fill="red")
+        
             return prediction, output_img
         else:
             return prediction, image

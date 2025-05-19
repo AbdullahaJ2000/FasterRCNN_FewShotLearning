@@ -8,7 +8,7 @@ general:
 # Paths
 paths:
   meta_trained_model: "models/fasterrcnn_meta_trained.pth"
-  fine_tuned_model: "models/fasterrcnn_finetuned_new_class.pth"
+  fine_tuned_model: "models/fasterrcnn_meta_trained.pth"
   output_dir: "outputs"
 
 # Dataset settings
@@ -29,9 +29,9 @@ model:
 
 # Meta-learning settings
 meta_learning:
-  num_epochs: 50
-  ways: 20  # N-way classification
-  shots: 15  # K-shot learning
+  num_epochs: 5
+  ways: 5  # N-way classification
+  shots: 5  # K-shot learning
   batch_size: 2
   lr: 0.0001
 
@@ -45,8 +45,8 @@ fine_tuning:
 
 # Inference settings
 inference:
-  image_path: "C:/Users/User/Desktop/few_shot_detection/kaggle/input/oxalis-coco/train/jp6_jpg.rf.70c7eb83525469db9f592e105946ede2.jpg"  # Can be a single image file or a directory
-  conf_threshold: 0.5
+  image_path: "C:/Users/User/Desktop/few_shot_detection/coco/train2017/train2017/000000000081.jpg"  # Can be a single image file or a directory
+  conf_threshold: 0.01
   batch_size: 1  # Batch size for processing multiple images
   save_visualizations: true  # Whether to save images with bounding boxes
   output_format:
