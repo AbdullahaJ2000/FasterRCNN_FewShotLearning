@@ -230,6 +230,62 @@ inference:
 ![test1](outputs/new_class_results/new_class_results_20250520_114110/output_jp3_jpg.rf.60311ca424e72991a45cc0276b4e5ebd.jpg)
 
 
+
+## Original Faster R-CNN Implementation
+
+The project includes a standard Faster R-CNN implementation (`FasterRCNN.py`) that serves as the baseline model. This implementation uses the ResNet-50-FPN backbone and includes the following key components:
+
+### Key Features
+- ResNet-50 with Feature Pyramid Network (FPN) backbone
+- Region Proposal Network (RPN)
+- Fast R-CNN head for classification and bounding box regression
+- COCO format dataset support
+- Training and inference pipelines
+- mAP evaluation metrics
+
+### Implementation Details
+
+#### Training Pipeline
+- Uses SGD optimizer with momentum
+- Supports custom number of classes
+- Includes validation split (80/20)
+- Generates training loss curves
+- Computes mAP@0.5 and mAP@0.75 metrics
+
+#### Inference
+- Supports single image inference
+- Visualizes detection results with bounding boxes
+- Includes confidence scores and class labels
+- Saves annotated images
+
+### Usage Example
+
+1. Training:
+```bash
+python FasterRCNN.py
+# Select 'train' mode
+# Enter COCO JSON path
+# Enter images directory
+# Specify number of epochs
+```
+
+2. Inference:
+```bash
+python FasterRCNN.py
+# Select 'infer' mode
+# Enter model path
+# Enter image path
+```
+
+### Performance Metrics
+- Training loss tracking
+- Validation mAP scores
+- IoU-based evaluation
+- Per-image detection statistics
+
+This implementation provides a solid foundation for the few-shot learning extensions, demonstrating the baseline performance of Faster R-CNN on standard object detection tasks. 
+
+
 ## Note
 
 **This is an initial version of the code and I welcome collaboration!**
@@ -249,4 +305,4 @@ Feel free to:
 3. Share your results and experiences
 4. Suggest new ideas or approaches
 
-Together we can make this few-shot object detection system more robust and useful for the community! 
+Together we can make this few-shot object detection system more robust and useful for the community!
