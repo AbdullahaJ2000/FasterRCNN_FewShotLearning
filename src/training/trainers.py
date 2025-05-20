@@ -128,10 +128,13 @@ class MetaTrainer(BaseTrainer):
         batch_size = self.config['meta_learning']['batch_size']
         lr = self.config['meta_learning']['lr']
         
-        # Use a smaller learning rate for stability
-        meta_optimizer = torch.optim.Adam(self.model.parameters(), lr=lr * 0.1)
+        # Use Adam optimizer for meta-learning
+        meta_optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
+        
+        # Keep track of losses
         losses_list = []
         
+        # Meta-training loop
         for epoch in range(num_epochs):
             outer_loss = 0.0
             print(f"Meta-Epoch {epoch+1}/{num_epochs}")
@@ -148,121 +151,49 @@ class MetaTrainer(BaseTrainer):
                 shuffle=True, 
                 collate_fn=lambda x: tuple(zip(*x))
             )
-            query_loader = DataLoader(
-                query_set,
-                batch_size=batch_size,
-                shuffle=False,
-                collate_fn=lambda x: tuple(zip(*x))
-            )
             
-            # Inner loop optimization
+            # Create a copy of the model for inner loop updates
             inner_model = copy.deepcopy(self.model)
             inner_model.train()
-            inner_optimizer = torch.optim.SGD(inner_model.parameters(), lr=0.001)
+            
+            # Inner loop optimization with SGD
+            inner_optimizer = torch.optim.SGD(inner_model.parameters(), lr=0.01)
             
             # Train on support set
-            support_losses = []
             for images, targets in support_loader:
                 images = [img.to(self.device) for img in images]
                 targets = [{k: v.to(self.device) for k, v in t.items()} for t in targets]
                 
+                # Forward pass
                 loss_dict = inner_model(images, targets)
                 if isinstance(loss_dict, list):
                     loss_dict = loss_dict[0]
                 
-                # Debug: Print individual loss components
-                print("Support set loss components:", {
-                    k: v.detach().cpu().float().item() if v.numel() == 1 
-                    else v.detach().cpu().float().mean().item()
+                # Display loss
+                print("Outer loop loss_dict:", {
+                    k: v.detach().cpu().item() if v.numel() == 1 else v.detach().cpu().mean().item() 
                     for k, v in loss_dict.items()
                 })
                 
-                # Scale and check loss values
-                loss = sum(v.float().mean() if v.dim() > 0 else v.float() 
-                          for v in loss_dict.values())
+                # Calculate total loss
+                loss = sum(
+                    v.float().mean() if v.dim() > 0 else v.float() 
+                    for v in loss_dict.values()
+                )
                 
-                # Check for NaN
-                if torch.isnan(loss):
-                    print("Warning: NaN loss detected in support set training")
-                    print("Loss components:", loss_dict)
-                    continue
-                
-                # Clip loss value
-                loss = torch.clamp(loss, min=-100, max=100)
-                support_losses.append(loss.item())
-                
-                inner_optimizer.zero_grad()
-                loss.backward()
-                
-                # Clip gradients
-                torch.nn.utils.clip_grad_norm_(inner_model.parameters(), max_norm=1.0)
-                
-                inner_optimizer.step()
-            
-            print(f"Average support set loss: {np.mean(support_losses):.4f}")
-            
-            # Evaluate on query set
-            inner_model.eval()
-            query_loss = 0.0
-            num_batches = 0
-            query_losses = []
-            
-            with torch.set_grad_enabled(True):  # Enable gradients for query set
-                for images, targets in query_loader:
-                    images = [img.to(self.device) for img in images]
-                    targets = [{k: v.to(self.device) for k, v in t.items()} for t in targets]
-                    
-                    loss_dict = inner_model(images, targets)
-                    if isinstance(loss_dict, list):
-                        loss_dict = loss_dict[0]
-                    
-                    # Debug: Print individual loss components
-                    print("Query set loss components:", {
-                        k: v.detach().cpu().float().item() if v.numel() == 1 
-                        else v.detach().cpu().float().mean().item()
-                        for k, v in loss_dict.items()
-                    })
-                    
-                    # Scale and check loss values
-                    loss = sum(v.float().mean() if v.dim() > 0 else v.float() 
-                              for v in loss_dict.values())
-                    
-                    # Check for NaN
-                    if torch.isnan(loss):
-                        print("Warning: NaN loss detected in query set evaluation")
-                        print("Loss components:", loss_dict)
-                        continue
-                    
-                    # Clip loss value
-                    loss = torch.clamp(loss, min=-100, max=100)
-                    query_losses.append(loss.item())
-                    query_loss += loss
-                    num_batches += 1
-            
-            if num_batches > 0:
-                query_loss = query_loss / num_batches  # Average the loss
-                
-                # Update meta-model using query loss
+                # Update meta-model
                 meta_optimizer.zero_grad()
-                query_loss.backward()
-                
-                # Clip gradients
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
-                
+                loss.backward()
                 meta_optimizer.step()
                 
-                # Record the loss value for logging
-                outer_loss = query_loss.item()
-                if not np.isnan(outer_loss):
-                    losses_list.append(outer_loss)
-                    print(f"Epoch {epoch+1} Query Loss: {outer_loss:.4f}")
-                    print(f"Query loss components: {query_losses}")
-                else:
-                    print(f"Epoch {epoch+1} Query Loss: NaN (skipped)")
-            else:
-                print(f"Epoch {epoch+1} Query Loss: NaN (no valid batches)")
+                outer_loss += loss.item()
+            
+            # Record loss for this epoch
+            losses_list.append(outer_loss)
+            print(f"Epoch {epoch+1} Loss: {outer_loss:.4f}")
         
         return losses_list
+
 
 
 class FineTuner(BaseTrainer):

@@ -6,7 +6,7 @@ This project implements a meta-learning approach for few-shot object detection u
 
 The system consists of two main phases:
 1. **Generalization Phase (Meta-Training)**: The model learns to quickly adapt to new object classes by learning general patterns and features that are transferable across different object categories
-2. **Adaptation Phase (Few-Shot Fine-tuning)**: The generalized model is adapted to recognize new classes with very few examples (typically 1-5 shots)
+2. **Adaptation Phase**: The generalized model is adapted to recognize new classes with very few examples (typically 1-5 shots)
 
 ## Features
 
@@ -14,6 +14,7 @@ The system consists of two main phases:
 - Support for COCO format datasets
 - Easy adaptation to new classes with minimal examples
 - Inference capabilities with visualization
+- Performance visualization graphs for meta-learning and few-shot learning
 
 ## Requirements
 
@@ -33,7 +34,7 @@ pip install -r requirements.txt
 ## Project Structure
 
 ```
-FasterRCNN_FewShotLearning/
+C:/Users/User/Desktop/few_shot_detection/FasterRCNN_FewShotLearning/
 ├── config/             # Configuration files
 ├── models/            # Model definitions
 ├── src/               # Source code
@@ -58,12 +59,22 @@ Train the model to learn generalizable features:
 python main.py --mode meta-train --config config/config.yaml
 ```
 
-### 2. Adaptation Phase (Few-Shot Fine-tuning)
+### 2. Adaptation Phase
 
-Adapt the generalized model to new classes:
+There are two types of adaptation approaches:
+
+#### Type 1: Full Data Adaptation
+Adapt the model using all available data for the new classes:
 
 ```bash
 python main.py --mode new-class --config config/config.yaml
+```
+
+#### Type 2: Few-Shot Adaptation
+Adapt the model using few-shot learning with unseen query data:
+
+```bash
+python main.py --mode new-class2 --config config/config.yaml
 ```
 
 ### 3. Inference
@@ -88,12 +99,12 @@ general:
 ### 1. Generalization Phase (Meta-Training)
 ```yaml
 paths:
-  meta_trained_model: "models/fasterrcnn_meta_trained.pth"
+  meta_trained_model: "/models/fasterrcnn_meta_trained.pth"
 
 dataset:
   meta_train:
-    json_path: "path/to/coco/annotations.json"
-    images_path: "path/to/training/images"
+    json_path: "data/coco/annotations.json"
+    images_path: "data/coco/train2017"
 
 model:
   backbone: "fasterrcnn_resnet50_fpn"
@@ -106,32 +117,58 @@ meta_learning:
   lr: 0.0001
 ```
 
-### 2. Adaptation Phase (Few-Shot Fine-tuning)
+### 2. Adaptation Phase Configurations
+
+#### Type 1: Full Data Adaptation
 ```yaml
 paths:
   meta_trained_model: "models/fasterrcnn_meta_trained.pth"
 
 dataset:
-  new_class:
-    json_path: "path/to/new_class/annotations.json" #support data annotation
-    images_path: "path/to/new_class/images" #support data images
-    test_images_folder: "path/to/test/images" #query data images
+    new_class:
+
+      json_path:"NewClassData/test2/_annotations.coco.json"  # Path to new class COCO JSON
+      images_path:"NewClassData/test2/support"  # Path to new class images folder
+      test_images_folder:"NewClassData/test2/query"  # Path to test images folder
+
 
 fine_tuning:
+  num_epochs: 20
+  batch_size: 4
+  lr: 0.001
+  momentum: 0.9
+  num_classes: 12
+```
+
+#### Type 2: Few-Shot Adaptation
+```yaml
+paths:
+  meta_trained_model: "models/fasterrcnn_meta_trained.pth"
+
+dataset:
+    new_class:
+
+      json_path:"NewClassData/test2/_annotations.coco.json"  # Path to new class COCO JSON
+      images_path:"NewClassData/test2/support"  # Path to new class images folder
+      test_images_folder:"NewClassData/test2/query"  # Path to test images folder
+
+few_shot_adaptation:
   num_epochs: 10
   batch_size: 2
   lr: 0.005
   momentum: 0.9
   num_classes: 12
+  ways: 10
+  shots: 10        # Number of classes to adapt to
 ```
 
 ### 3. Inference Mode
 ```yaml
 paths:
-  fine_tuned_model: "models/fasterrcnn_finetuned_new_class.pth"
+  fine_tuned_model: "models/adapted_model.pth"
 
 inference:
-  image_path: "path/to/image.jpg"  # Can be a single image or directory
+  image_path: "NewClassData/test"
   conf_threshold: 0.5
   batch_size: 1
   save_visualizations: true
@@ -145,10 +182,19 @@ inference:
    - Focuses on learning transferable features across different object categories
 
 2. For Adaptation Phase:
-   - Requires new class data in COCO format
-   - `num_classes` should match your new class dataset
-   - Support data (few examples) is used for adaptation
-   - Query data without annotation
+   - Type 1 (Full Data Adaptation):
+     - Uses all available data for training
+     - Includes validation split for monitoring performance
+     - Suitable when you have sufficient data for new classes
+     - Better for final model deployment
+
+   - Type 2 (Few-Shot Adaptation):
+     - Uses limited support data for adaptation
+     - Evaluates on unseen query data
+     - Suitable for scenarios with limited data
+     - Tests model's few-shot learning capabilities
+     - Support data should be in COCO format
+     - Query data can be unannotated
 
 3. For inference:
    - Can process single images or directories
@@ -173,7 +219,34 @@ inference:
    - Supports batch processing
    - Visualizes detection results
 
-## Performance
+## Example of results
 
-The system is designed to achieve good detection performance even with very few training examples.
+### Meta-learning loss on 5 epochs on coco dataset
+![test1](outputs/meta_losses_20250520_113557.png)
+### More than 1 class
+![test1](outputs/new_class_results/new_class_results_20250520_001235/output_0c09b79cff39932c59ecc745dd827906_jpg.rf.a9966fa6e4e9a3da8246cd0e44c0e0d1.jpg)
 
+### On 1 class
+![test1](outputs/new_class_results/new_class_results_20250520_114110/output_jp3_jpg.rf.60311ca424e72991a45cc0276b4e5ebd.jpg)
+
+
+## Note
+
+**This is an initial version of the code and I welcome collaboration!**
+
+This project is actively being developed and improved. I would be grateful for any contributions, including but not limited to:
+
+- Bug fixes and improvements
+- New features and enhancements
+- Documentation improvements
+- Performance optimizations
+- Additional dataset support
+- Better visualization tools
+
+Feel free to:
+1. Open issues for bugs or feature requests
+2. Submit pull requests with improvements
+3. Share your results and experiences
+4. Suggest new ideas or approaches
+
+Together we can make this few-shot object detection system more robust and useful for the community! 
