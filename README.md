@@ -44,7 +44,6 @@ C:/Users/User/Desktop/few_shot_detection/FasterRCNN_FewShotLearning/
 │   ├── inference/    # Inference code
 │   └── utils/        # Utility functions
 ├── outputs/          # Training outputs and results
-├── NewClassData/     # Data for new classes
 ├── main.py           # Main entry point
 └── requirements.txt  # Project dependencies
 ```
