@@ -153,7 +153,7 @@ dataset:
       images_path:"NewClassData/test2/support"  # Path to new class images folder
       test_images_folder:"NewClassData/test2/query"  # Path to test images folder
 
-few_shot_adaptation:
+fine_tuning:
   num_epochs: 10
   batch_size: 2
   lr: 0.005
