@@ -34,7 +34,7 @@ pip install -r requirements.txt
 ## Project Structure
 
 ```
-C:/Users/User/Desktop/few_shot_detection/FasterRCNN_FewShotLearning/
+FasterRCNN_FewShotLearning/
 ├── config/             # Configuration files
 ├── models/            # Model definitions
 ├── src/               # Source code
