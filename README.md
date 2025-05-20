@@ -36,6 +36,7 @@ pip install -r requirements.txt
 ```
 FasterRCNN_FewShotLearning/
 ├── config/             # Configuration files
+├── NewClassData/        # Example tasks
 ├── models/            # Model definitions
 ├── src/               # Source code
 │   ├── data/         # Dataset handling
@@ -45,6 +46,7 @@ FasterRCNN_FewShotLearning/
 │   └── utils/        # Utility functions
 ├── outputs/          # Training outputs and results
 ├── main.py           # Main entry point
+├── FasterRCNN.py     # Traditional FasterRCNN
 └── requirements.txt  # Project dependencies
 ```
 
